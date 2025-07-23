@@ -253,7 +253,10 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   _isFlipping: 0
+  _flipped: 0
   _text: {fileID: 8627581108092589820}
+  _evalChannel: {fileID: 11400000, guid: 04b1f9ebd6d28494f911b596d4eaa128, type: 2}
+  _valueChannel: {fileID: 11400000, guid: 643f4d52383dc4345a64e71e7520fbba, type: 2}
 --- !u!114 &5430677449038537174
 MonoBehaviour:
   m_ObjectHideFlags: 0

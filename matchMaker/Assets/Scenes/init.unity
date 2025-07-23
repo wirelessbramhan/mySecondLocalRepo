@@ -208,6 +208,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _viewData: {fileID: 11400000, guid: 29ae57c4b78c7c44ea32f86bb1ca2c7c, type: 2}
+  _config: {fileID: 11400000, guid: 996f4aa39c0400a46a1bf781c6b3e532, type: 2}
   _sectionPrefab: {fileID: 7008267194354285896, guid: 1048cbe8405a61d4c90f2fc5cd465877, type: 3}
   _cell: {fileID: 6986523747066979149, guid: b58714877a01d4d4684606088fddb6bc, type: 3}
 --- !u!1 &167632092
@@ -517,6 +518,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d78fe21b2c966754cb972473ed6d6f84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _gridConfig: {fileID: 11400000, guid: 996f4aa39c0400a46a1bf781c6b3e532, type: 2}
+  _valueChannel: {fileID: 11400000, guid: 643f4d52383dc4345a64e71e7520fbba, type: 2}
+  _evalChannel: {fileID: 11400000, guid: 04b1f9ebd6d28494f911b596d4eaa128, type: 2}
+  _firstValue: 0
+  _count: 0
 --- !u!1 &1106434288
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,33 +7,60 @@ public class GridCell : MonoBehaviour
     public AnimationCurve _lerpCurve;
     [SerializeField] private bool _isFlipping, _flipped;
     [SerializeField] private TextMeshProUGUI _text;
+    [SerializeField, Header("listening to"), Space(2)] private BoolEC_SO _evalChannel;
+    [SerializeField, Header("broadcasting on"), Space(2)] private FloatEC_SO _valueChannel;
+    private int _value;
+
+    private void OnEnable()
+    {
+        _evalChannel.OnEventRaised += EvalChannel_OnEventRaised;
+    }
+
+    private void EvalChannel_OnEventRaised(bool obj)
+    {
+        if (_flipped)
+        {
+            HideCell();
+        }
+    }
+
+    private void OnDisable()
+    {
+        _evalChannel.OnEventRaised -= EvalChannel_OnEventRaised;
+    }
+
+    public void Init(int value, bool flip)
+    {
+        //set cell state for saving on init
+        _value = value;
+        _flipped = flip;
+
+        //Hide text if card state is flipped
+        if (transform.GetChild(0).TryGetComponent<TextMeshProUGUI>(out var cellText))
+        {
+            cellText.text = _value.ToString();
+        }
+
+        else
+        {
+            _text.text = _value.ToString();
+        }
+
+        if (!_flipped)
+        {
+            _text.gameObject.SetActive(false);
+        }
+
+        //trigger animation after data is loaded, basic pop in smoothly
+        StartCoroutine(LerpCell(true));
+    }
 
     public bool GetFlipStatus()
     {
         return _flipped;
     }
 
-    public void Init(string text)
-    {
-        if (transform.GetChild(0).TryGetComponent<TextMeshProUGUI>(out var cellText))
-        {
-            cellText.text = text;
-        }
-
-        else
-        {
-            _text.text = text;
-            _text.gameObject.SetActive(false);
-        }
-
-        //set flipped status for saving on init
-        _flipped = false;
-
-        //trigger animation after data is loaded, basic pop in smoothly
-        StartCoroutine(LerpCell());
-    }
-
-    private IEnumerator LerpCell(float duration = 1.0f)
+    private IEnumerator LerpCell(bool lerpIn, float duration = 1.0f)
     {
         float current = 0;
         float fraction = current / duration;
@@ -43,7 +70,16 @@ public class GridCell : MonoBehaviour
             current += Time.deltaTime;
             fraction = current / duration;
 
-            transform.localScale = Vector3.Lerp(Vector3.zero, Vector3.one, _lerpCurve.Evaluate(fraction));
+            if (lerpIn)
+            {
+                transform.localScale = Vector3.Lerp(Vector3.zero, Vector3.one, _lerpCurve.Evaluate(fraction));
+            }
+
+            else
+            {
+                transform.localScale = Vector3.Lerp(Vector3.one, Vector3.zero, _lerpCurve.Evaluate(fraction));
+            }
+
             yield return null;
         }
     }
@@ -63,7 +99,7 @@ public class GridCell : MonoBehaviour
         }
     }
 
-    private IEnumerator FlipCard(float duration = 1.0f)
+    private IEnumerator FlipCard(float duration = 0.5f)
     {
         _isFlipping = true;
 
@@ -80,9 +116,15 @@ public class GridCell : MonoBehaviour
         }
 
         _isFlipping = false;
+        _flipped = true;
 
         yield return null;
 
-        _flipped = true;
+        _valueChannel.RaiseEvent(_value);
+    }
+
+    public void HideCell()
+    {
+        transform.localScale = Vector3.zero;
     }
 }
