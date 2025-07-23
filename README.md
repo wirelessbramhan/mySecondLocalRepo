@@ -6,8 +6,7 @@
 | UI | Composite grid |
 | Input | Direct UI raycast, Keep manager for Speed |
 | Scoring | turn++ and evaluation happens on second tap. **DONOT WAIT FOR EVAL (GIVEN).** |
-| GameState FSM |  |
-1. 
+| GameState FSM |  menu and core loop |
 
 ## Iteration points
 
