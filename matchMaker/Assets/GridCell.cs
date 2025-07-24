@@ -8,8 +8,43 @@ public class GridCell : MonoBehaviour
     [SerializeField] private bool _isFlipping, _flipped;
     [SerializeField] private TextMeshProUGUI _text;
     [SerializeField, Header("listening to"), Space(2)] private BoolEC_SO _evalChannel;
-    [SerializeField, Header("broadcasting on"), Space(2)] private FloatEC_SO _valueChannel;
-    private int _value;
+    [SerializeField, Header("broadcasting on"), Space(2)] private StringEC_SO _nameChannel;
+    private string _value;
+
+    public void Init(string value, bool flip, float flipDelay)
+    {
+        //set cell state for saving on init
+        _value = value;
+        _flipped = flip;
+
+        //Hide text if card state is flipped
+        if (transform.GetChild(0).TryGetComponent<TextMeshProUGUI>(out var cellText))
+        {
+            cellText.text = _value;
+        }
+
+        else
+        {
+            _text.text = _value;
+        }
+
+        //trigger animation after data is loaded, basic pop in smoothly
+        StartCoroutine(LerpCell(true, 0.1f));
+
+        //Show the card
+        StartCoroutine(ShowCard(flipDelay));
+    }
+
+    private IEnumerator ShowCard(float delay)
+    {
+        transform.localRotation = Quaternion.Euler(0, 180, 0);
+
+        yield return new WaitForSeconds(delay);
+
+        StartCoroutine(FlipCard(false));
+    }
+
+    #region flipping & evaluation
 
     private void OnEnable()
     {
@@ -20,7 +55,15 @@ public class GridCell : MonoBehaviour
     {
         if (_flipped)
         {
-            HideCell();
+            if (obj)
+            {
+                HideCell();
+            }
+
+            else
+            {
+                StartCoroutine(FlipCard(false));
+            }
         }
     }
 
@@ -29,62 +72,12 @@ public class GridCell : MonoBehaviour
         _evalChannel.OnEventRaised -= EvalChannel_OnEventRaised;
     }
 
-    public void Init(int value, bool flip)
-    {
-        //set cell state for saving on init
-        _value = value;
-        _flipped = flip;
-
-        //Hide text if card state is flipped
-        if (transform.GetChild(0).TryGetComponent<TextMeshProUGUI>(out var cellText))
-        {
-            cellText.text = _value.ToString();
-        }
-
-        else
-        {
-            _text.text = _value.ToString();
-        }
-
-        if (!_flipped)
-        {
-            _text.gameObject.SetActive(false);
-        }
-
-        //trigger animation after data is loaded, basic pop in smoothly
-        StartCoroutine(LerpCell(true));
-    }
-
     public bool GetFlipStatus()
     {
         return _flipped;
     }
 
-    private IEnumerator LerpCell(bool lerpIn, float duration = 1.0f)
-    {
-        float current = 0;
-        float fraction = current / duration;
-
-        while (fraction <= 1)
-        {
-            current += Time.deltaTime;
-            fraction = current / duration;
-
-            if (lerpIn)
-            {
-                transform.localScale = Vector3.Lerp(Vector3.zero, Vector3.one, _lerpCurve.Evaluate(fraction));
-            }
-
-            else
-            {
-                transform.localScale = Vector3.Lerp(Vector3.one, Vector3.zero, _lerpCurve.Evaluate(fraction));
-            }
-
-            yield return null;
-        }
-    }
-
-    public void Flip()
+    public void Flip(float timeToFlip = 0.5f)
     {
         //Avoids redundant flip calls
 
@@ -94,37 +87,71 @@ public class GridCell : MonoBehaviour
 
             if (!_isFlipping)
             {
-                StartCoroutine(FlipCard());
+                StartCoroutine(FlipCard(true, timeToFlip));
             }
         }
     }
 
-    private IEnumerator FlipCard(float duration = 0.5f)
+    private IEnumerator FlipCard(bool flip, float duration = 0.5f)
     {
         _isFlipping = true;
 
         float current = 0;
         float fraction = current / duration;
 
+        Quaternion targetrot = Quaternion.Euler(0, 180, 0);
+
+        if (!flip)
+        {
+            targetrot = Quaternion.Euler(Vector3.zero);
+        }
+
+        //show text before lerp
+        _text.gameObject.SetActive(flip);
+
         while (fraction <= 1)
         {
             current += Time.deltaTime;
             fraction = current / duration;
 
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, 180, 0), _lerpCurve.Evaluate(fraction));
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, targetrot, _lerpCurve.Evaluate(fraction));
             yield return null;
         }
 
         _isFlipping = false;
-        _flipped = true;
+        _flipped = flip;
 
         yield return null;
 
-        _valueChannel.RaiseEvent(_value);
+        _nameChannel.RaiseEvent(gameObject.name);
     }
+
+#endregion
 
     public void HideCell()
     {
         transform.localScale = Vector3.zero;
+    }
+
+    private IEnumerator LerpCell(bool lerpIn, float duration = 1.0f)
+    {
+        float current = 0;
+
+        Vector3 targetScale = Vector3.one;
+
+        if (!lerpIn)
+        {
+            targetScale = Vector3.zero;
+        }
+
+        while (transform.localScale != targetScale)
+        {
+            current += Time.deltaTime;
+            float fraction = current / duration;
+
+            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, _lerpCurve.Evaluate(fraction));
+
+            yield return null;
+        }
     }
 }

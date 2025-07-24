@@ -6,45 +6,56 @@ public class ScoreHandler : MonoBehaviour
 {
     [SerializeField] private GridConfigSO _gridConfig;
     [SerializeField, Header("listening to"), Space(2)]
-    private FloatEC_SO _valueChannel;
+    private StringEC_SO _cardnameChannel;
     [SerializeField, Header("broadcasting on"), Space(2)]
     private BoolEC_SO _evalChannel;
     [SerializeField]
-    private int _firstValue, _count;
+    private int _count, _value;
+    [SerializeField]
+    private string _first;
+
     private void OnEnable()
     {
-        _valueChannel.OnEventRaised += ValueChannel_OnEventRaised;
+        _cardnameChannel.OnEventRaised += CardChannel_OnEventRaised;
         _count = 0;
-        _firstValue = 0;
     }
 
-    private void ValueChannel_OnEventRaised(float obj)
+    private void CardChannel_OnEventRaised(string cardName)
     {
         _count++;
 
         if (_count % 2 != 0)
         {
-            _firstValue = (int)obj;
+            if (_gridConfig._cards.ContainsKey(cardName))
+            {
+                _first = cardName;
+            }
         }
-
+        
         else
         {
-            if (_firstValue == (int)obj)
+            if (_gridConfig._cards.ContainsKey(cardName))
             {
-                Debug.Log("correct choice!");
+                _evalChannel.RaiseEvent(_gridConfig._cards[_first] == _gridConfig._cards[cardName]);
             }
-
-            else
-            {
-                Debug.Log("wrong choice!");
-            }
-
-            _evalChannel.RaiseEvent(_firstValue == (int)obj);
         }
+        
     }
 
     private void OnDisable()
     {
-        _valueChannel.OnEventRaised -= ValueChannel_OnEventRaised;
+        _cardnameChannel.OnEventRaised -= CardChannel_OnEventRaised;
     }
+
+    //private IEnumerator StartComparison(string first)
+    //{
+    //    yield return new WaitUntil(() => _value != string.Empty);
+
+    //    if (_value == first)
+    //    {
+            
+    //    }
+
+    //    _evalChannel.RaiseEvent(_value == first);
+    //}
 }
