@@ -3,12 +3,11 @@ using UnityEngine;
 public class ScoreHandler : MonoBehaviour
 {
     [SerializeField] private GridConfigSO _gridConfig;
-    [SerializeField] private SaveDataHandler _dataHandler;
 
     [SerializeField, Header("listening to"), Space(2)]
     private StringEC_SO _cardnameChannel;
     [SerializeField, Header("broadcasting on"), Space(2)]
-    private BoolEC_SO _evalChannel;
+    private BoolEC_SO _evalChannel, _gameOverChannel;
     [SerializeField]
     private int _comboCount;
     [SerializeField]
@@ -16,12 +15,11 @@ public class ScoreHandler : MonoBehaviour
 
     private void Awake()
     {
-        _comboCount = 0;
+        _comboCount = 1;
         _firstSelected = null;
     }
     private void OnEnable()
     {
-        _evalChannel.OnEventRaised += EvalChannel_OnEventRaised;
         _cardnameChannel.OnEventRaised += CardnameChannel_OnEventRaised;
     }
 
@@ -38,28 +36,30 @@ public class ScoreHandler : MonoBehaviour
             {
                 _gridConfig.CardDict[_firstSelected] = -1;
                 _gridConfig.CardDict[obj] = -1;
+
+                SaveDataHandler.CurrentStateData.UpdatePlayerData(_comboCount);
+                _comboCount++;
+
                 _evalChannel.RaiseEvent(true);
             }
 
             else
             {
                 _evalChannel.RaiseEvent(false);
+                _comboCount = 1;
             }
 
             _firstSelected = null;
         }
-    }
 
-    private void EvalChannel_OnEventRaised(bool obj)
-    {
-        if (obj)
+        if (SaveDataHandler.CurrentStateData.MoveCount >= (SaveDataHandler.CurrentStateData.ColCount * SaveDataHandler.CurrentStateData.RowCount) / 2)
         {
-            _comboCount++;
+            _gameOverChannel.RaiseEvent(true);
         }
     }
 
     private void OnDisable()
     {
-        _evalChannel.OnEventRaised -= EvalChannel_OnEventRaised;
+        _cardnameChannel.OnEventRaised -= CardnameChannel_OnEventRaised;
     }
 }

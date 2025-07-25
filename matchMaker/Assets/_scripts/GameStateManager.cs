@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public enum GameStateKey
 {
@@ -47,6 +48,23 @@ public class GameStateManager : MonoBehaviour
     private bool _changingStates;
     [SerializeField]
     private int _currentIndex;
+    [SerializeField]
+    private BoolEC_SO _gameOverChannel;
+
+    private void OnEnable()
+    {
+        _gameOverChannel.OnEventRaised += GameOverCahnnel_OnEventRaised;
+    }
+
+    private void GameOverCahnnel_OnEventRaised(bool obj)
+    {
+        ChangeStateNext();
+    }
+
+    private void OnDisable()
+    {
+        _gameOverChannel.OnEventRaised -= GameOverCahnnel_OnEventRaised;
+    }
 
     private void OnValidate()
     {
@@ -102,5 +120,16 @@ public class GameStateManager : MonoBehaviour
         }
 
         Debug.Log("Gamestate changed to : " + _current);
+    }
+
+    public void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void ExitGame()
+    {
+        _current.ExitState();
+        Application.Quit();
     }
 }

@@ -18,22 +18,30 @@ public class GridCell : MonoBehaviour
         _flipped = flip;
         _isFlipping = false;
 
-        //Hide text if card state is flipped
-        if (transform.GetChild(0).TryGetComponent<TextMeshProUGUI>(out var cellText))
+        if (!flip)
         {
-            cellText.text = _value;
+            //Hide text if card state is flipped
+            if (transform.GetChild(0).TryGetComponent<TextMeshProUGUI>(out var cellText))
+            {
+                cellText.text = _value;
+            }
+
+            else
+            {
+                _text.text = _value;
+            }
+
+            //trigger animation after data is loaded, basic pop in smoothly
+            StartCoroutine(LerpCell(true, 0.1f));
+
+            //Show the card
+            StartCoroutine(ShowCard(flipDelay));
         }
 
         else
         {
-            _text.text = _value;
+            HideCell();
         }
-
-        //trigger animation after data is loaded, basic pop in smoothly
-        StartCoroutine(LerpCell(true, 0.1f));
-
-        //Show the card
-        StartCoroutine(ShowCard(flipDelay));
     }
 
     #region flipping & evaluation

@@ -64,11 +64,19 @@ public class GridView : MonoBehaviour
             {
                 GridCell cell = Instantiate(_cell, section.transform);
                 string cardName = "card" + count;
-                string cardValue = _config.GetElement(cardName).ToString();
+                string cardValue = _config.GetValue(cardName).ToString();
 
-                cell.gameObject.name = cardName;
-                cell.Init(cardValue, false, _hideDelay);
-                count++;
+                if (_config.GetValue(cardName) < 0)
+                {
+                    cell.Init(cardValue, true, 0);
+                }
+
+                else
+                {
+                    cell.gameObject.name = cardName;
+                    cell.Init(cardValue, false, _hideDelay);
+                    count++;
+                }
             }
         }
     }

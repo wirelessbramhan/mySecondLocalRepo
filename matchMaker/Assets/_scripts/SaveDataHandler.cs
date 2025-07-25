@@ -22,10 +22,10 @@ public class GameStateData
         Score = 0;
     }
 
-    public void SetPlayerData(int moveCount, int score)
+    public void UpdatePlayerData(int multiplier)
     {
-        MoveCount = moveCount;
-        Score = score;
+        MoveCount++;
+        Score += 1 * multiplier;
     }
 
     public void SaveToPlayerPrefs()
@@ -98,12 +98,6 @@ public class SaveDataHandler : MonoBehaviour
             _gridConfig.WriteToDict(CurrentStateData.Cards);
         }
 
-        else
-        {
-            Debug.Log("no saved data! creating...");
-            CreateState();
-        }
-
         yield return null;
 
         StateData = CurrentStateData;
@@ -111,11 +105,15 @@ public class SaveDataHandler : MonoBehaviour
         _loadDataChannel.RaiseEvent(state != null);
     }
 
-    private void CreateState()
+    public void CreateState()
     {
-        CurrentStateData = new GameStateData("unknown" + Random.Range(0, 9) + Random.Range(0, 9));
+        Debug.Log("no saved data! creating...");
 
-        _gridConfig.AddElements(CurrentStateData.RowCount, CurrentStateData.ColCount);
+        CurrentStateData = new GameStateData("unknown" + Random.Range(0, 9) + Random.Range(0, 9));
+        CurrentStateData.RowCount = _gridConfig.RowCount;
+        CurrentStateData.ColCount = _gridConfig.ColCount;
+
+        _gridConfig.AddElements();
         
         var cards = _gridConfig.ReadDict();
 
@@ -124,7 +122,12 @@ public class SaveDataHandler : MonoBehaviour
             CurrentStateData.Cards = cards;
         }
 
-        //_loadDataChannel.RaiseEvent(false);
+        else
+        {
+            Debug.Log("card dict not found!", this);
+        }
+
+        StateData = CurrentStateData;
     }
 
     [ContextMenu("Save State")]
@@ -144,7 +147,7 @@ public class SaveDataHandler : MonoBehaviour
     }
 
     [ContextMenu("Delete SaveData")]
-    private void DeleteSave()
+    public void DeleteSave()
     {
         if (PlayerPrefs.HasKey("SavedGameState"))
         {

@@ -77,7 +77,7 @@ public class GridConfigSO : ScriptableObject
         }
     }
 
-    public int GetElement(string cardName)
+    public int GetValue(string cardName)
     {
         if (CardDict.ContainsKey(cardName))
         {
