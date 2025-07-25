@@ -21,16 +21,16 @@ public class KeyValuePair<T1, T2>
 public class GridConfigSO : ScriptableObject
 {
     public int RowCount, ColCount;
-    private List<int> MatchList;
+    public List<int> MatchList = new();
 
     public Dictionary<string, int> CardDict;
-    public List<KeyValuePair<string, int>> Cards;
+    //public List<KeyValuePair<string, int>> Cards;
 
     public void AddElements()
     {
-        MatchList.Clear();
+        MatchList = new List<int>();
 
-        for (int i = 1; i < RowCount * ColCount + 1; i++)
+        for (int i = 1; i <= RowCount * ColCount; i++)
         {
             MatchList.Add(Mathf.RoundToInt((i + 1) / 2));
         }
@@ -38,13 +38,42 @@ public class GridConfigSO : ScriptableObject
         CardDict = new Dictionary<string, int>();
 
         //Shuffle draw order (Marble Bag)
-        for (int i = 0; i < MatchList.Count; i++)
+        for (int i = 0; i < RowCount * ColCount; i++)
         {
             int index = Random.Range(0, MatchList.Count);
             var element = MatchList[index];
+            string cardName = "card" + i;
             MatchList.RemoveAt(index);
 
-            CardDict.Add("card" + i, element);
+
+            CardDict.Add(cardName, element);
+        }
+    }
+
+    public void AddElements(int rowCount, int colCount)
+    {
+        RowCount = rowCount; 
+        ColCount = colCount;
+
+        MatchList = new List<int>();
+
+        for (int i = 1; i <= RowCount * ColCount; i++)
+        {
+            MatchList.Add(Mathf.RoundToInt((i + 1) / 2));
+        }
+
+        CardDict = new Dictionary<string, int>();
+
+        //Shuffle draw order (Marble Bag)
+        for (int i = 0; i < RowCount * ColCount; i++)
+        {
+            int index = Random.Range(0, MatchList.Count);
+            var element = MatchList[index];
+            string cardName = "card" + i;
+            MatchList.RemoveAt(index);
+
+
+            CardDict.Add(cardName, element);
         }
     }
 
@@ -58,63 +87,64 @@ public class GridConfigSO : ScriptableObject
         return 0;
     }
 
-    public int GetNextElement(string cardName)
-    {
-        if (MatchList.Count > 0)
-        {
-            int index = Random.Range(0, MatchList.Count);
-            var element = MatchList[index];
-            MatchList.RemoveAt(index);
+    //public int GetNextElement(string cardName)
+    //{
+    //    if (MatchList.Count > 0)
+    //    {
+    //        int index = Random.Range(0, MatchList.Count);
+    //        var element = MatchList[index];
+    //        MatchList.RemoveAt(index);
 
-            CardDict.Add(cardName, element);
-            return element;
-        }
+    //        CardDict.Add(cardName, element);
+    //        return element;
+    //    }
 
-        else
-        {
-            Debug.Log("Match List empty!", this);
-            return 0;
-        }
-    }
+    //    else
+    //    {
+    //        Debug.Log("Match List empty!", this);
+    //        return 0;
+    //    }
+    //}
 
-    public bool ReadDict()
+    public List<KeyValuePair<string, int>> ReadDict()
     {
         if (CardDict != null && CardDict.Count > 0)
         {
-            Cards.Clear();
+            List<KeyValuePair<string, int>> cards = new List<KeyValuePair<string, int>>();
             int count = 0;
 
             foreach (var item in CardDict)
             {
                 KeyValuePair<string, int> pair = new(item.Key, item.Value, "element" + count);
-                Cards.Add(pair);
+                cards.Add(pair);
                 count++;
             }
-        }
 
-        if (Cards.Count == CardDict.Count)
-        {
-            return true;
+            return cards;
         }
 
         else
         {
-            return false;
+            return null;
         }
     }
 
-    public bool WriteToDict()
+    public bool WriteToDict(List<KeyValuePair<string, int>> cards)
     {
-        CardDict = new Dictionary<string, int>();
-
-        foreach (var card in Cards)
+        if (cards.Count > 0 && cards[0] != null)
         {
-            CardDict.Add(card.Key, card.Value);
-        }
+            CardDict = new Dictionary<string, int>();
+            int count = 0;
 
-        if (Cards.Count == CardDict.Count)
-        {
-            return true;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (CardDict.TryAdd(cards[i].Key, cards[i].Value))
+                {
+                    count++;
+                }
+            }
+
+            return count == cards.Count;
         }
 
         else

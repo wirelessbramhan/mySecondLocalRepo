@@ -1,10 +1,9 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public class GameState
+[System.Serializable]
+public class GameStateData
 {
     public int MoveCount;
     public int Score;
@@ -16,7 +15,7 @@ public class GameState
 
     public const string PlayerPrefsKeyName = "SavedGameState";
 
-    public GameState(string playerName)
+    public GameStateData(string playerName)
     {
         PlayerName = playerName;
         MoveCount = 0;
@@ -39,7 +38,7 @@ public class GameState
         PlayerPrefs.Save();
     }
 
-    public static GameState CreateFromPlayerPrefs()
+    public static GameStateData CreateFromPlayerPrefs()
     {
         // If the game was never saved before, the key will not exist; in this case return null
         if (!PlayerPrefs.HasKey(PlayerPrefsKeyName))
@@ -49,17 +48,17 @@ public class GameState
         string json = PlayerPrefs.GetString(PlayerPrefsKeyName);
 
         // Deserialize the JSON string into a new GameState object and return it
-        return JsonUtility.FromJson<GameState>(json);
+        return JsonUtility.FromJson<GameStateData>(json);
     }
 }
 
 public class SaveDataHandler : MonoBehaviour
 {
-    public static GameState CurrentState;
+    public static GameStateData CurrentStateData;
     [SerializeField] private GridConfigSO _gridConfig;
-    [SerializeField] private BoolEC_SO _evalChannel;
-
-    public GameState GameState;
+    [SerializeField, Header("listening to"), Space(2)] private BoolEC_SO _evalChannel;
+    [SerializeField, Header("broadcasting on"), Space(2)] private BoolEC_SO _loadDataChannel;
+    public GameStateData StateData;
 
     private void OnEnable()
     {
@@ -79,52 +78,66 @@ public class SaveDataHandler : MonoBehaviour
         }
     }
 
-    private void Start()
+    public void LoadData()
     {
         StartCoroutine(LoadState());
     }
 
     private IEnumerator LoadState()
     {
-        var state = GameState.CreateFromPlayerPrefs();
+        var state = GameStateData.CreateFromPlayerPrefs();
 
         if (state != null)
         {
             Debug.Log("save found. Player : " + state.PlayerName);
-            CurrentState = state;
-            
-            _gridConfig.Cards = CurrentState.Cards;
+            CurrentStateData = state;
 
-            _gridConfig.ColCount = CurrentState.ColCount;
-            _gridConfig.RowCount = CurrentState.RowCount;
+            _gridConfig.ColCount = CurrentStateData.ColCount;
+            _gridConfig.RowCount = CurrentStateData.RowCount;
 
-            _gridConfig.WriteToDict();
+            _gridConfig.WriteToDict(CurrentStateData.Cards);
         }
 
         else
         {
             Debug.Log("no saved data! creating...");
-            CurrentState = new GameState("unknown");
-
-            _gridConfig.AddElements();
-            _gridConfig.ReadDict();
+            CreateState();
         }
 
         yield return null;
 
-        GameState = CurrentState;
+        StateData = CurrentStateData;
+
+        _loadDataChannel.RaiseEvent(state != null);
+    }
+
+    private void CreateState()
+    {
+        CurrentStateData = new GameStateData("unknown" + Random.Range(0, 9) + Random.Range(0, 9));
+
+        _gridConfig.AddElements(CurrentStateData.RowCount, CurrentStateData.ColCount);
+        
+        var cards = _gridConfig.ReadDict();
+
+        if (cards != null)
+        {
+            CurrentStateData.Cards = cards;
+        }
+
+        //_loadDataChannel.RaiseEvent(false);
     }
 
     [ContextMenu("Save State")]
     private void SaveState()
     {
-        if (_gridConfig.ReadDict())
+        var cards = _gridConfig.ReadDict();
+        if (cards != null)
         {
-            CurrentState.Cards = _gridConfig.Cards;
-            CurrentState.ColCount = _gridConfig.ColCount;
-            CurrentState.RowCount = _gridConfig.RowCount;
+            CurrentStateData.Cards = cards;
+            CurrentStateData.ColCount = _gridConfig.ColCount;
+            CurrentStateData.RowCount = _gridConfig.RowCount;
 
-            CurrentState.SaveToPlayerPrefs();
+            CurrentStateData.SaveToPlayerPrefs();
 
             Debug.Log("save successful");
         }
@@ -136,6 +149,7 @@ public class SaveDataHandler : MonoBehaviour
         if (PlayerPrefs.HasKey("SavedGameState"))
         {
             PlayerPrefs.DeleteKey("SavedGameState");
+            Debug.Log("save delete successful");
         }
     }
 }
